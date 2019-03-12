@@ -201,12 +201,12 @@ The PPU Status has the following values:
 
 As an example, this is how we can work with sprites:  
 The console has the ability to render 64 simultaneous sprites. The information on these sprites are accessible through the CPU io mapping from address 1004h to 1143h (320 bytes), each sprite has 5 bytes of information (5 x 64 = 320 bytes):  
-1 - Miscellaneous byte (each of its bits is a flag: Active, Flipped_X, Flipped_Y, PageBit0, PageBit1, AboveOverlay, Width16 and Height16)
-2 - Character byte (which character is the sprite in the page described by the corresponding flags above)
-3 - Color key byte (which color is to be transparent)
-4 - X position byte
-5 - Y position byte
-
+1 - Miscellaneous byte (each of its bits is a flag: Active, Flipped_X, Flipped_Y, PageBit0, PageBit1, AboveOverlay, Width16 and Height16)  
+2 - Character byte (which character is the sprite in the page described by the corresponding flags above)  
+3 - Color key byte (which color is to be transparent)  
+4 - X position byte  
+5 - Y position byte  
+<br/>
 So, to make a sprite visible, we must put the Active flag to 1 and put the sprite in coordinates in which it is visible (coordinates x=32 and y=32 puts the sprite in the top left of the screen, less than that and he's off screen or partially visible).  
 Then we can also set its character and what is its transparent color.  
 For example, if we want to set the 10th sprite as visible we would set io address 4145 (1004h + (5 x 9)) to 1 and then set its coordinates to, for example, x=100 and y=120, so we would set address 4148 to 100 and 4149 to 120.  
