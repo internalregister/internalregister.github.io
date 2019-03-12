@@ -3,7 +3,6 @@ layout: default
 title: "Introduction to a 'Homebrew' Video Game Console"
 description: ""
 date:   2019-03-12
-categories: jekyll update
 comments: true
 ---
 
