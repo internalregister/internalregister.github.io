@@ -63,15 +63,16 @@ I ended up having the PPU generate a 224x192 pixel image that is then sent to th
 Just like in the old days the PPU has "fixed" capabilities that can be configured. The background that can be rendered is composed of 8x8 pixel characters (sometimes called tiles). This means a screen background has the size of 28x24 tiles.  
 In order to have per-pixel scrolling and the ability to update the background seamlessly I made it so there are 4 virtual screens each one having 28x24 tiles that are contiguous and wrap around one other.  
 <br/>
-Above the background the PPU can render 64 <a href="https://wikipedia.org/wiki/Sprite_(computer_graphics)" target="_blank">sprites</a> that can have a width and height of either 8 or 16 pixels and can be flipped horizontally or vertically or in both axis.  
+Above the background the PPU can render 64 <a href="https://wikipedia.org/wiki/Sprite_(computer_graphics)" target="_blank">sprites</a> that can have a width and height of either 8 or 16 pixels (1, 2 or 4 characters) and can be flipped horizontally or vertically or in both axis.  
 Also above the background the PPU can render an "overlay" which is a patch composed of 28x6 tiles. This is useful for games that need a HUD and in which the background is scrolling and sprites are being used for other purposes than to show information.  
 <br/>
-Other "advanced" features, is the ability to scroll the background in different diferections in separate lines, this enables games to have effetcs such as a limited <a href="https://wikipedia.org/wiki/Parallax_scrolling" target="_blank">parallax scrolling</a> or split-screen.  
+Other "advanced" feature is the ability to scroll the background in different diferections in separate lines, this enables games to have effetcs such as a limited <a href="https://wikipedia.org/wiki/Parallax_scrolling" target="_blank">parallax scrolling</a> or split-screen.  
+There's also the attribute table, which is the possibility of giving each tile a value from 0 to 3, and then it's possible to set all the tiles of a given attribute to a certain tile page or increment their character number. This is useful when there are certain parts of the background that change constantly, the CPU doesn't need to update each one of the tiles, it only needs to say something like: "all tiles with attribute 1 will increment their character number by 2" (using different techniques, this effect can be seen for example in block tiles with a moving question mark in Mario games or in waterfall tiles in other games that seem to be changing constantly).
 <br/>
 <br/>
 After having a functional video board, I started working with the CPU I chose for the console, the <a href="https://wikipedia.org/wiki/Zilog_Z80" target="_blank">Zilog Z80</a>.  
 One of the reasons I chose the Z80 (other than it just being a cool retro CPU) was because the Z80 has access to a 16bit memory space and a 16bit IO space, something that other similar 8-bit CPUs do not have, such as the famous <a href="https://wikipedia.org/wiki/MOS_Technology_6502" target="_blank">6502</a>.  
-The 6502, for example, only has 16bit memory space, which means that the whole 16bits were not reserved just for memory but had to be shared between memory access and external device access, such as video, audio, inputs, etc. By having an IO space together with a memory space, I could have the whole of the 16bit memory space reserved for memory (64KB of code and data) and have the IO space for communication with external devices.  
+The 6502, for example, only has a 16bit memory space, which means that the whole 16bits were not reserved just for memory but had to be shared between memory access and external device access, such as video, audio, inputs, etc. By having an IO space together with a memory space, I could have the whole of the 16bit memory space reserved for memory (64KB of code and data) and have the IO space for communication with external devices.  
 <br/>
 I started by connecting the CPU to an EEPROM with some test code and also connecting it via the IO space to a microcontroller I had set up to communicate with a PC via <a href="https://wikipedia.org/wiki/RS-232" target="_blank">RS232</a> in order to check if the CPU was functioning well as well as all the connections I was making. This microcontroller (an Atmega324 operating at 20Mhz) was to become the IO MCU (or input/output microcontroller unit), responsible for managing access to the game controllers, SD Card, <a href="https://wikipedia.org/wiki/PS/2_port" target="_blank">PS/2</a> Keyboard and the RS232 communication.  
 
@@ -83,7 +84,7 @@ After this I updated the IO MCU's firmware with the help of this <a href="http:/
 The CPU was now able to navigate through directories, browse their contents, open and read from files. All this by reading and writing to specific IO space addresses.  
 <br/>
 The next thing I implemented was the interaction between the CPU and the PPU.  
-For this a found "an easy solution" which was to get dual-port RAM (a RAM chip that can be simultaneously connected to two different buses), it spares me having to place more ICs like line selectors and such and also it makes the accesses to the RAM between both chips virtually simultaneous. The PPU also comunicates with the CPU directly by activating its NMI (non-masking interrupt) every frame. This means the CPU has an interrupt every frame, which makes it valuable for timing and knowing when to update graphics.  
+For this I found "an easy solution" which was to get dual-port RAM (a RAM chip that can be simultaneously connected to two different buses), it saves me from having to place more ICs like line selectors and such and also it makes the accesses to the RAM between both chips virtually simultaneous. The PPU also comunicates with the CPU directly by activating its NMI (non-masking interrupt) every frame. This means the CPU has an interrupt every frame, which makes it valuable for timing and knowing when to update graphics.  
 <br/>
 Each frame the interaction between CPU, PPU and VPU is as following:  
 - The PPU copies the information of the PPU-RAM to internal RAM.  
@@ -92,7 +93,6 @@ Each frame the interaction between CPU, PPU and VPU is as following:
     - the CPU jumps to the NMI interrupt function and starts updating the PPU-RAM with the new graphical frame state. (the program should return from the interrupt before the start of the next frame)  
     - the PPU renders the image based on the information it had previously copied to one of the VRAMs.  
     - the VPU sends the image in the other VRAM to the TV.  
-<br/>
 Around this time I also added support for game controllers, I originally wanted to use Super Nintendo controllers, but the socket for this type of controller is proprietary and was hard to come by, therefore I chose the Mega Drive/Genesis compatible 6-button controllers, they use standard <a href="https://wikipedia.org/wiki/D-subminiature" target="_blank">DB-9</a> sockets that are widely available.  
 
 <img src="/assets/jointBoard1.jpg" alt="Joint Board 1" width="700"/>
@@ -115,27 +115,25 @@ The CPU controls the SPU (Sound Processor Unit, the name I gave to the microcont
 <br/>
 Similarly to the graphics module, the sound module has 128KB for storing sound patches and PCM samples, the CPU can load information to this memory through the SPU. This way the CPU can either tell the SPU to play commands stored in this RAM or update commands to the SPU every frame.  
 <br/>
-The CPU controls the 4 PWM channels through 4 cyclic buffers present in the SPU-RAM.
-The SPU will go through these buffers and execute the commands present in them.
-In the same way there is another cyclic buffer in the SPU-RAM for the FM synthesis chip.
+The CPU controls the 4 PWM channels through 4 cyclic buffers present in the SPU-RAM.  
+The SPU will go through these buffers and execute the commands present in them.  
+In the same way there is another cyclic buffer in the SPU-RAM for the FM synthesis chip.  
+<br/>
 So, similar to how it works with graphics, the interaction between CPU and SPU works like this:  
 - The SPU copies the information in the SPU-RAM to internal RAM.  
 - The SPU waits for the NMI signal sent by the PPU. (for synchronization purposes)  
 - At the same time:  
     - The CPU updates the buffers for the PWM channels and for the FM synthesis chip.  
     - the SPU executes the commands in the buffers regarding the information in its internal memory.  
-<br/>
-- Continuously while all of the above happens, the SPU updates the PWM sound at a frequency of 16Khz.  
+- Continuously while all of the above happens, the SPU updates the PWM sound at a frequency of 16Khz.   
 <br/>
 
 <img src="/assets/soundBoard1.jpg" alt="Sound Board 1" width="700"/>
 
 After all the modules were developed, some were put into protoboards.  
 For the CPU module I've managed to design and order a custom board, don't know if I'll do the same for the other modules, I think I was pretty lucky to get a working board on the first try.  
-Only the sound module remains as a breadboard (for now).
-
+Only the sound module remains as a breadboard (for now).  
 <br/>
-
 This is the video game console now (at time of writing):  
 
 <img src="/assets/console1.jpg" alt="Console 1" width="700"/>
@@ -189,7 +187,7 @@ This diagram helps illustrate what components are in each module and how they in
 - 64 independent background horizontal scrolling in custom lines.
 - 8 independent background vertical scrolling in custom lines.
 - Overlay plane with 224x48 pixels with or without colorkey transparency.
-- Background attribute table (this one is hard to summarize).
+- Background attribute table.
 - RGB and Composite PAL output through SCART socket.
 
 **Sound:**
