@@ -76,7 +76,7 @@ In order to have per-pixel scrolling and the ability to update the background se
 Above the background, the PPU can render 64 <a href="https://wikipedia.org/wiki/Sprite_(computer_graphics)" target="_blank">sprites</a> that can have a width and height of either 8 or 16 pixels (1, 2 or 4 characters) and can be flipped horizontally or vertically or in both axes.  
 Also above the background an "overlay" can be rendered, which is a patch composed of 28x6 tiles. This is useful for games that need a HUD and in which the background is scrolling and sprites are being used for other purposes than to show information.  
 <br/>
-Other "advanced" feature is the ability to scroll the background in different diferections in separate lines, this enables games to have effetcs such as a limited <a href="https://wikipedia.org/wiki/Parallax_scrolling" target="_blank">parallax scrolling</a> or split-screen.  
+Other "advanced" feature is the ability to scroll the background in different directions in separate lines, this enables games to have effetcs such as a limited <a href="https://wikipedia.org/wiki/Parallax_scrolling" target="_blank">parallax scrolling</a> or split-screen.  
   
 And there's also the attribute table, which is the possibility of giving each tile a value from 0 to 3, and then it's possible to set all the tiles of a given attribute to a certain tile page or increment their character number. This is useful when there are certain parts of the background that change constantly, the CPU doesn't need to update each one of the tiles, it only needs to say something like: "all tiles with attribute 1 will increment their character number by 2" (using different techniques, this effect can be seen for example in block tiles with a moving question mark in Mario games or in waterfall tiles that seem to be changing constantly seen in other games).
   
@@ -506,7 +506,7 @@ However, while building this project, I've learned a lot about electronics, game
 I have plans to build other consoles/computers. In fact I have another video game console in the making, almost complete, which is a simplified retro-style console based of a cheap FPGA board and a few extra components (not nearly as many as in this project, obviously), designed to be a lot cheaper and replicable.  
 <br/>
 <br/>
-There certainly would be a lot more to talk about, I barely mentioned how the sound engine works and how the CPU interacts with it, there's also a lot more that can be said about the graphics engine, the other IO available and pretty much the console itself.  
+Even though there's a lot I've written about this project, there certainly would be a lot more to talk about, I barely mentioned how the sound engine works and how the CPU interacts with it, there's also a lot more that can be said about the graphics engine, the other IO available and pretty much the console itself.  
 Depending on the feedback I might write other articles focusing on updates, more indepth information on the different modules of the console or other projects.  
 
 ### Projects/Websites/Youtube channels that helped me for inspiration and technical knowledge:
