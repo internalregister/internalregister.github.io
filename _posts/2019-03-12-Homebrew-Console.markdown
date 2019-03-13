@@ -63,11 +63,12 @@ I ended up having the PPU generate a 224x192 pixel image that is then sent to th
 Just like in the old days the PPU has "fixed" capabilities that can be configured. The background that can be rendered is composed of 8x8 pixel characters (sometimes called tiles). This means a screen background has the size of 28x24 tiles.  
 In order to have per-pixel scrolling and the ability to update the background seamlessly I made it so there are 4 virtual screens each one having 28x24 tiles that are contiguous and wrap around one other.  
 <br/>
-Above the background the PPU can render 64 <a href="https://wikipedia.org/wiki/Sprite_(computer_graphics)" target="_blank">sprites</a> that can have a width and height of either 8 or 16 pixels (1, 2 or 4 characters) and can be flipped horizontally or vertically or in both axis.  
-Also above the background the PPU can render an "overlay" which is a patch composed of 28x6 tiles. This is useful for games that need a HUD and in which the background is scrolling and sprites are being used for other purposes than to show information.  
+Above the background, the PPU can render 64 <a href="https://wikipedia.org/wiki/Sprite_(computer_graphics)" target="_blank">sprites</a> that can have a width and height of either 8 or 16 pixels (1, 2 or 4 characters) and can be flipped horizontally or vertically or in both axis.  
+Also above the background an "overlay" can be rendered, which is a patch composed of 28x6 tiles. This is useful for games that need a HUD and in which the background is scrolling and sprites are being used for other purposes than to show information.  
 <br/>
 Other "advanced" feature is the ability to scroll the background in different diferections in separate lines, this enables games to have effetcs such as a limited <a href="https://wikipedia.org/wiki/Parallax_scrolling" target="_blank">parallax scrolling</a> or split-screen.  
-There's also the attribute table, which is the possibility of giving each tile a value from 0 to 3, and then it's possible to set all the tiles of a given attribute to a certain tile page or increment their character number. This is useful when there are certain parts of the background that change constantly, the CPU doesn't need to update each one of the tiles, it only needs to say something like: "all tiles with attribute 1 will increment their character number by 2" (using different techniques, this effect can be seen for example in block tiles with a moving question mark in Mario games or in waterfall tiles in other games that seem to be changing constantly).
+  
+And there's also the attribute table, which is the possibility of giving each tile a value from 0 to 3, and then it's possible to set all the tiles of a given attribute to a certain tile page or increment their character number. This is useful when there are certain parts of the background that change constantly, the CPU doesn't need to update each one of the tiles, it only needs to say something like: "all tiles with attribute 1 will increment their character number by 2" (using different techniques, this effect can be seen for example in block tiles with a moving question mark in Mario games or in waterfall tiles in other games that seem to be changing constantly).
 <br/>
 <br/>
 After having a functional video board, I started working with the CPU I chose for the console, the <a href="https://wikipedia.org/wiki/Zilog_Z80" target="_blank">Zilog Z80</a>.  
@@ -93,6 +94,7 @@ Each frame the interaction between CPU, PPU and VPU is as following:
     - the CPU jumps to the NMI interrupt function and starts updating the PPU-RAM with the new graphical frame state. (the program should return from the interrupt before the start of the next frame)  
     - the PPU renders the image based on the information it had previously copied to one of the VRAMs.  
     - the VPU sends the image in the other VRAM to the TV.  
+  
 Around this time I also added support for game controllers, I originally wanted to use Super Nintendo controllers, but the socket for this type of controller is proprietary and was hard to come by, therefore I chose the Mega Drive/Genesis compatible 6-button controllers, they use standard <a href="https://wikipedia.org/wiki/D-subminiature" target="_blank">DB-9</a> sockets that are widely available.  
 
 <img src="/assets/jointBoard1.jpg" alt="Joint Board 1" width="700"/>
@@ -145,7 +147,7 @@ This is the video game console now (at time of writing):
 ***Architecture:***
 
 This diagram helps illustrate what components are in each module and how they interact with one another.
-(the only thing missing is the signal the PPU sends to the CPU directly every frame in the form of an NMI, non-masking interrupt)
+(the only things missing are the signal the PPU sends to the CPU directly every frame in the form of an NMI and the same signal being sent to the SPU as well)
 
 ![Architecture](/assets/architecture.png)
 
