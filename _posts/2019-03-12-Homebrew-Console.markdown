@@ -18,12 +18,12 @@ Even though I had no experience, I said to myself "why not?", bought a few books
 <br/>
 <br/>
 I wanted to build a console that would be similar to those which are nostalgic to me, I wanted something between an <a href="https://wikipedia.org/wiki/Nintendo_Entertainment_System" target="_blank">NES</a> and a <a href="https://wikipedia.org/wiki/Super_Nintendo_Entertainment_System" target="_blank">Super Nintendo</a> or between a <a href="https://wikipedia.org/wiki/Master_System" target="_blank">Sega Master System</a> and a <a href="https://wikipedia.org/wiki/Sega_Genesis" target="_blank">Mega Drive</a>.  
-These video game consoles had a CPU, a custom video chip and an audio chip either integrated or separate.  
+These video game consoles had a CPU, a custom video chip (in those days it wasn't called a GPU) and an audio chip either integrated or separate.  
 Games were distributed in cartridges, which were basically hardware extensions with a ROM chip and sometimes other components as well.  
 
 **The initial plan was to build a console with the following characteristics:**
 
-- No emulation, the games/programs had to run on real underpowered hardware
+- No emulation, the games/programs had to run on real hardware, not necessarilly hardware of the time, but hardware that is just fast enough for the job
 - With a dedicated "retro" CPU chip
 - With TV output (analog signal)
 - Ability to produce sound
@@ -32,14 +32,16 @@ Games were distributed in cartridges, which were basically hardware extensions w
 - Ability to support Mario-style platform games (and of course other types of games as well)
 - Games/Programs available through an SD Card
 
+The reason I wanted SD card support instead of cartridge support, it's mainly because it's a lot more practical to have programs available in an SD card, as it makes it a lot easier to copy files from a PC to it. Having cartridges would mean to make even more hardware and to have a new hardware for each program.
+
 ## Building it
 
 The first thing I worked on was the video signal generation.  
 Each video game console of the era I was aiming for had different proprietary graphics chips which made them all have different characteristics.  
 For this reason I didn't want to use any pre-made graphics chip, I wanted my console to have unique graphical capabilities. And because it was impossible for me to make my own chip, and I didn't know how to use an FPGA, I opted for a software based graphics-chip using a 20Mhz 8-bit microcontroller.  
-It's not overpowered and has just enough performance to generate the kind of graphics I want.  
+It's not overkill and has just enough performance to generate the kind of graphics I want.  
 <br/>
-So, I started by using an Atmega644 microcontroller running at 20Mhz to send a <a href="https://wikipedia.org/wiki/PAL" target="_blank">PAL</a> video signal to a TV (I basically bit-banged the PAL video signal protocol):
+So, I started by using an Atmega644 microcontroller running at 20Mhz to send a <a href="https://wikipedia.org/wiki/PAL" target="_blank">PAL</a> video signal to a TV (because the microcontroller doesn't support this protocol natively, I had to bit bang the PAL video signal protocol):
 
 <img src="/assets/vpuTest1.jpg" alt="VPU Test 1" width="700"/>
 <img src="/assets/vpuTest2.jpg" alt="VPU Test 2" width="700"/>
@@ -48,16 +50,28 @@ The microcontroller produces 8-bit color (RGB332, 3 bits for red, 3 bits for gre
 <br/>
 <br/>
 Because I wanted to have a microcontroller only drive the TV signal (I call it the VPU, Video Processing Unit), I decided to use a double-buffer technique.  
-I had the second microcontroller (PPU, Picture Processing Unit, which is an Atmega1284 also at 20Mhz) generate an image to a RAM (VRAM) chip while the first one would dump the contents of another RAM (VRAM) chip to the TV.  
+I had the second microcontroller (PPU, Picture Processing Unit, which is an Atmega1284 also at 20Mhz) generate an image to a RAM (VRAM) chip while the first one would dump the contents of another RAM (VRAM) chip to the TV.      
 After one frame (2 frames in PAL or 1/25th of a second), the VPU switches the RAMs, and dumps the image generated into VRAM1 while the PPU generates an image to VRAM2.  
-The video board turned out quite complex as I had to use some external hardware to allow for the two microcontrollers to access the the same RAM chips and also to speed up the access to RAM that also had to be bit-banged, so I added some 74 series chips such as counters, line selectors, transceivers, etc.  
+The video board turned out quite complex as I had to use some external hardware to allow for the two microcontrollers to access the same RAM chips and also to speed up the access to RAM that also had to be bit-banged, so I added some 74 series chips such as counters, line selectors, transceivers, etc.  
 The firmware for VPU and especially the PPU also became quite complex as I had to do extremely performant code to be able to have all the graphical capabilities I wanted, originally it was all done in assembly, later I coded some of it in C.
 
 <img src="/assets/videoBoard2.jpg" alt="Video Board 1" width="700"/>
 <img src="/assets/videoBoard3.jpg" alt="Video Board 2" width="700"/>
 
+I ended up having the PPU generate a 224x192 pixel image that is then sent to the TV by the VPU. This resolution might seem low, but it is in fact only a bit lower than the consoles mentioned above that usually had resolutions of 256x224 pixels. The lower resolution allowed me to cram more graphical features into the time I had to draw each frame.  
+<br/>
+Just like in the old days the PPU has "fixed" capabilities that can be configured. The background that can be rendered is composed of 8x8 pixel characters (sometimes called tiles). This means a screen background has the size of 28x24 tiles.  
+In order to have per-pixel scrolling and the ability to update the background seamlessly I made it so there are 4 virtual screens each one having 28x24 tiles that are contiguous and wrap around one other.  
+<br/>
+Above the background the PPU can render 64 <a href="https://wikipedia.org/wiki/Sprite_(computer_graphics)" target="_blank">sprites</a> that can have a width and height of either 8 or 16 pixels and can be flipped horizontally or vertically or in both axis.  
+Also above the background the PPU can render an "overlay" which is a patch composed of 28x6 tiles. This is useful for games that need a HUD and in which the background is scrolling and sprites are being used for other purposes than to show information.  
+<br/>
+Other "advanced" features, is the ability to scroll the background in different diferections in separate lines, this enables games to have effetcs such as a limited <a href="https://wikipedia.org/wiki/Parallax_scrolling" target="_blank">parallax scrolling</a> or split-screen.  
+<br/>
+<br/>
 After having a functional video board, I started working with the CPU I chose for the console, the <a href="https://wikipedia.org/wiki/Zilog_Z80" target="_blank">Zilog Z80</a>.  
 One of the reasons I chose the Z80 (other than it just being a cool retro CPU) was because the Z80 has access to a 16bit memory space and a 16bit IO space, something that other similar 8-bit CPUs do not have, such as the famous <a href="https://wikipedia.org/wiki/MOS_Technology_6502" target="_blank">6502</a>.  
+The 6502, for example, only has 16bit memory space, which means that the whole 16bits were not reserved just for memory but had to be shared between memory access and external device access, such as video, audio, inputs, etc. By having an IO space together with a memory space, I could have the whole of the 16bit memory space reserved for memory (64KB of code and data) and have the IO space for communication with external devices.  
 <br/>
 I started by connecting the CPU to an EEPROM with some test code and also connecting it via the IO space to a microcontroller I had set up to communicate with a PC via <a href="https://wikipedia.org/wiki/RS-232" target="_blank">RS232</a> in order to check if the CPU was functioning well as well as all the connections I was making. This microcontroller (an Atmega324 operating at 20Mhz) was to become the IO MCU (or input/output microcontroller unit), responsible for managing access to the game controllers, SD Card, <a href="https://wikipedia.org/wiki/PS/2_port" target="_blank">PS/2</a> Keyboard and the RS232 communication.  
 
@@ -65,10 +79,21 @@ I started by connecting the CPU to an EEPROM with some test code and also connec
 
 The CPU was then connected to a 128KB RAM Chip, from which 56KB was accessible (this seems like a waste but I could only get either 128KB or 32KB RAM chips). This way the CPUs memory space is composed of 8KB of ROM and 56KB of RAM.  
 <br/>
+After this I updated the IO MCU's firmware with the help of this <a href="http://www.roland-riegel.de/sd-reader/" target="_blank">library</a> and added SD Card support.  
+The CPU was now able to navigate through directories, browse their contents, open and read from files. All this by reading and writing to specific IO space addresses.  
+<br/>
 The next thing I implemented was the interaction between the CPU and the PPU.  
 For this a found "an easy solution" which was to get dual-port RAM (a RAM chip that can be simultaneously connected to two different buses), it spares me having to place more ICs like line selectors and such and also it makes the accesses to the RAM between both chips virtually simultaneous. The PPU also comunicates with the CPU directly by activating its NMI (non-masking interrupt) every frame. This means the CPU has an interrupt every frame, which makes it valuable for timing and knowing when to update graphics.  
 <br/>
-About this time I also added support for game controllers, I originally wanted to use Super Nintendo controllers, but the socket for this type of controller is proprietary and was hard to come by, therefore I chose the Mega Drive/Genesis compatible 6-button controllers, they use standard <a href="https://wikipedia.org/wiki/D-subminiature" target="_blank">DB-9</a> sockets that are widely available.  
+Each frame the interaction between CPU, PPU and VPU is as following:  
+- The PPU copies the information of the PPU-RAM to internal RAM.  
+- The PPU sends an NMI signal to the CPU  
+- At the same time:  
+    - the CPU jumps to the NMI interrupt function and starts updating the PPU-RAM with the new graphical frame state. (the program should return from the interrupt before the start of the next frame)  
+    - the PPU renders the image based on the information it had previously copied to one of the VRAMs.  
+    - the VPU sends the image in the other VRAM to the TV.  
+<br/>
+Around this time I also added support for game controllers, I originally wanted to use Super Nintendo controllers, but the socket for this type of controller is proprietary and was hard to come by, therefore I chose the Mega Drive/Genesis compatible 6-button controllers, they use standard <a href="https://wikipedia.org/wiki/D-subminiature" target="_blank">DB-9</a> sockets that are widely available.  
 
 <img src="/assets/jointBoard1.jpg" alt="Joint Board 1" width="700"/>
 
@@ -89,6 +114,19 @@ However I found out I could get my hands on vintage chips relatively easily, and
 The CPU controls the SPU (Sound Processor Unit, the name I gave to the microcontroller that controls the YM3438 and produces sound on its own) again through a dual-port RAM, this time only 2KB in size.  
 <br/>
 Similarly to the graphics module, the sound module has 128KB for storing sound patches and PCM samples, the CPU can load information to this memory through the SPU. This way the CPU can either tell the SPU to play commands stored in this RAM or update commands to the SPU every frame.  
+<br/>
+The CPU controls the 4 PWM channels through 4 cyclic buffers present in the SPU-RAM.
+The SPU will go through these buffers and execute the commands present in them.
+In the same way there is another cyclic buffer in the SPU-RAM for the FM synthesis chip.
+So, similar to how it works with graphics, the interaction between CPU and SPU works like this:  
+- The SPU copies the information in the SPU-RAM to internal RAM.  
+- The SPU waits for the NMI signal sent by the PPU. (for synchronization purposes)  
+- At the same time:  
+    - The CPU updates the buffers for the PWM channels and for the FM synthesis chip.  
+    - the SPU executes the commands in the buffers regarding the information in its internal memory.  
+<br/>
+- Continuously while all of the above happens, the SPU updates the PWM sound at a frequency of 16Khz.  
+<br/>
 
 <img src="/assets/soundBoard1.jpg" alt="Sound Board 1" width="700"/>
 
@@ -113,7 +151,7 @@ This diagram helps illustrate what components are in each module and how they in
 
 ![Architecture](/assets/architecture.png)
 
-- *CPU*: Zilog Z80
+- *CPU*: Zilog Z80 operating at 10Mhz
 - *CPU-ROM*: 8KB EEPROM, holds the bootloader code
 - *CPU-RAM*: 128KB RAM (56KB usable), holds the code and data of the programs/games
 - *IO MCU*: Atmega324, serves as an interface between the CPU and the RS232, PS/2 Keyboard, Controllers and SD Card filesystem
