@@ -115,7 +115,9 @@ Around this time I also added support for game controllers, I originally wanted 
   
 At this point I had a CPU with game controller support that could control the PPU and could load programs from an SD Card, so...time to make a game in Z80 assembly of course, it took me a couple of days of my free time to make this (<a href="/assets/miniBreakout.asm">source code</a>):  
 
-<iframe width="700" height="393" src="https://www.youtube.com/embed/2Pcrg1fesBk" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<div class="video-container">
+<iframe src="https://www.youtube.com/embed/2Pcrg1fesBk" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen class="video"></iframe>
+</div>
   
 ### Adding custom graphics  
   
@@ -135,9 +137,9 @@ The CPU controls the SPU (Sound Processor Unit, the name I gave to the microcont
 <br/>
 Similarly to the graphics module, the sound module has 128KB for storing sound patches and PCM samples, the CPU can load information to this memory through the SPU. This way the CPU can either tell the SPU to play commands stored in this RAM or update commands to the SPU every frame.  
 <br/>
-The CPU controls the 4 PWM channels through 4 cyclic buffers present in the SPU-RAM.  
+The CPU controls the 4 PWM channels through 4 circular buffers present in the SPU-RAM.  
 The SPU will go through these buffers and execute the commands present in them.  
-In the same way there is another cyclic buffer in the SPU-RAM for the FM synthesis chip.  
+In the same way there is another circular buffer in the SPU-RAM for the FM synthesis chip.  
 <br/>
 So, similar to how it works with graphics, the interaction between CPU and SPU works like this:  
 - The SPU copies the information in the SPU-RAM to internal RAM.  
@@ -482,19 +484,27 @@ Here's an example of running a program using the emulator and then using some of
 
 A BASIC implementation running on the console and using the PS/2 keyboard, in this video, after the first program, I write directly into PPU-RAM through IO space to enable and configure a sprite and finally move it:  
 
-<iframe width="909" height="511" src="https://www.youtube.com/embed/2UNjKx4uZGY" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<div class="video-container">
+<iframe src="https://www.youtube.com/embed/2UNjKx4uZGY" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen class="video"></iframe>
+</div>
 <br/>
 Graphics demo, this video shows a program that bounces 64 16x16 sprites, over a background with custom scrolling and with the overlay plane enabled and moving up and down above or behind sprites:  
 
-<iframe width="907" height="510" src="https://www.youtube.com/embed/OA0q3_Krgxc" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<div class="video-container">
+<iframe src="https://www.youtube.com/embed/OA0q3_Krgxc" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen class="video"></iframe>
+</div>
 <br/>
 Sound demo showing the YM3438 capabilities as well as PCM sample playback, the FM music plus the PCM samples in this demo take up almost all of the 128KB of the SNDRAM:  
 
-<iframe width="907" height="510" src="https://www.youtube.com/embed/xDsTGmqxLzM" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<div class="video-container">
+<iframe src="https://www.youtube.com/embed/xDsTGmqxLzM" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen class="video"></iframe>
+</div>
 <br/>
 Tetris, using almost just background tiles for graphics, for music it uses the YM3438 and for sound effects PWM sound patches :  
-
-<iframe width="907" height="510" src="https://www.youtube.com/embed/E77XZUwKd54" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+  
+<div class="video-container">
+<iframe src="https://www.youtube.com/embed/E77XZUwKd54" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen class="video"></iframe>
+</div>
 <br/>
 <br/>
 # In conclusion
