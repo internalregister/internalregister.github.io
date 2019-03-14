@@ -2,7 +2,7 @@
 layout: default
 title: "Building a 'Homebrew' Video Game Console"
 description: ""
-date:   2019-03-12
+date:   2019-03-14
 comments: true
 ---
 
@@ -168,7 +168,7 @@ This is the video game console now (at time of writing):
 This diagram helps illustrate what components are in each module and how they interact with one another.
 (the only things missing are the signal the PPU sends to the CPU directly every frame in the form of an NMI and the same signal being sent to the SPU as well)
 
-![Architecture](/assets/architecture.png)
+![Architecture](/assets/architecture2.png)
 
 - *CPU*: Zilog Z80 operating at 10Mhz
 - *CPU-ROM*: 8KB EEPROM, holds the bootloader code
