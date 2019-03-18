@@ -18,6 +18,8 @@ gtag('config', '{{ site.google_analytics }}');
 <meta name="theme-color" content="#157878">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="stylesheet" href="{{ '/assets/css/style.css?v=' | append: site.github.build_revision | relative_url }}">
+<script async defer src="https://buttons.github.io/buttons.js"></script>
+<script src="https://apis.google.com/js/platform.js"></script>
 </head>
 <body>
 <a id="skip-to-content" href="#content">Skip to the content.</a>
@@ -25,6 +27,18 @@ gtag('config', '{{ site.google_analytics }}');
 <header class="page-header" role="banner">
 <h1 class="project-name">{{ page.title | default: site.title | default: site.github.repository_name }}</h1>
 <h2 class="project-tagline">{{ page.description | default: site.description | default: site.github.project_tagline }}</h2>
+<div class="social-media-container">
+<a class="github-button" href="https://github.com/internalregister" aria-label="Follow @internalregister on GitHub">Follow @internalregister</a>
+<a class="github-button" href="https://github.com/internalregister/internalregister.github.io/subscription" data-icon="octicon-eye" aria-label="Watch internalregister/internalregister.github.io on GitHub">Watch</a>
+<br/>
+<div class="twitter-container">
+<a href="https://twitter.com/IntRegister?ref_src=twsrc%5Etfw" class="twitter-follow-button" data-show-count="false">Follow @TwitterDev</a><script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+</div>
+<br/>
+<div class="youtube-container">
+<div class="g-ytsubscribe" data-channelid="UCJWtzUEX2HCxNLGwGlWsmzQ" data-layout="default" data-count="hidden"></div>
+</div>
+</div>
 </header>
 
 <main id="content" class="main-content" role="main">
