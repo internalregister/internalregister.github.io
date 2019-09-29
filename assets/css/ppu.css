@@ -1,0 +1,191 @@
+.ppu-ram-address {
+    width: 50px;
+    font-family: 'Lucida Console', Monaco, monospace;
+    font-weight: bold;
+    padding: 2px !important;
+    font-size: 12px;
+    border: 0px !important;
+    color: black;
+}
+
+.ppu-ram-byte {
+    width: 25px;
+    text-align: right;
+    cursor: pointer;
+    font-family: 'Lucida Console', Monaco, monospace;
+    padding: 2px !important; 
+    font-size: 12px;
+    border: 0px !important;
+    line-height: 1;
+    color: black;
+}
+
+.description-div {
+    width: 220px;
+    height: 200px;
+    position: fixed;
+    background-color: white;
+    border: 1px solid gray;
+    font-family: 'Lucida Console', Monaco, monospace;
+    font-size: 12px;
+    padding: 10px;
+    line-height: 1;
+    color: black;
+}
+
+.cover-div {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 100;
+}
+
+.ppu-ram-container-div {
+    width: 525px;
+    height: 384px;
+    overflow-y: scroll;
+}
+
+#ppuRam {
+    position: relative;
+}
+
+.ppu-ram-container-div table {
+    border-collapse: separate !important;
+    border-spacing: 2px !important;    
+}
+
+.main-content {
+    max-width: 80rem !important;    
+}
+
+.set-value-div {
+    z-index: 120;
+    background-color: white;
+    border: 1px solid gray;
+    width: 300px;
+    height: 200px;
+    position: absolute;
+    top: 92px;
+    left: 112px;
+    font-family: 'Lucida Console', Monaco, monospace;
+    font-size: 12px;
+    line-height: 1;
+    color: black;
+    padding: 5px;
+}
+
+.set-value-control-container {
+    text-align: center;
+}
+
+.set-value-control-container input {
+    width: 100px;
+    margin-right: 5px;
+}
+
+.set-value-control-container button {
+    margin-right: 5px;
+}
+
+.set-value-text-div {
+    width: 100%;
+    height: 160px;
+}
+
+#editorOnInit {
+    display: inline-block;
+    width: 450px;
+    height: 300px;
+}
+
+#editorOnFrame {
+    display: inline-block;
+    width: 450px;
+    height: 300px;
+}
+
+#ppuContainer {
+    display: block;
+    border: 1px solid gray;
+    padding: 5px;
+    height: 430px;
+    order: 0;
+}
+
+#ppuRamContainer {
+    display: block;
+    border: 1px solid gray;
+    padding: 5px;
+    height: 430px;
+    order: 1;
+}
+
+#chrRamContainer {
+    display: block;
+    border: 1px solid gray;
+    padding: 5px;
+    order: 3;
+}
+
+#chrRam {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: 1000px;
+    align-items: flex-end;
+    position: relative;
+    font-family: 'Lucida Console', Monaco, monospace;
+    font-size: 15px;
+    line-height: 1;
+    color: black;
+}
+
+#chrTable {
+    font-family: 'Lucida Console', Monaco, monospace;
+    font-size: 12px; 
+    width: initial;
+    margin-left: 20px;
+    margin-bottom: 10px;
+}
+
+#chrTable tr td {
+    width: 27px;
+    height: 27px;
+    padding: 0px 2px 0px 2px;
+    text-align: right;
+}
+
+#mainContainer {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+#scriptsContainer {
+    order: 2;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    border: 1px solid gray;
+}
+
+.chr-ram-load-chrs {
+    position: absolute;
+    z-index: 110;
+    top: 40px;
+    left: 300px;
+    background-color: white; 
+    padding: 4px;
+    width: 400px;
+}
+
+.function-button {
+    font-size: 15px;
+    line-height: 1;
+    color: black;
+    margin-left: 10px;
+}
