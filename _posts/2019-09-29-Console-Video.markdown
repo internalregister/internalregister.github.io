@@ -509,13 +509,27 @@ Here's an example of how VRAM is accessed:
 ### Interfacing with CHR-RAM
   
 Interfacing the CHR-RAM was one of last things I did with the video board.  
-This component needed to be connected in a different way.  
+  
+At this point the console was already working with internal pre-defined graphics.  
+However I wanted it to have custom graphics, it was an important thing for me.  
+It meant that every game/program could output specific graphics.  
+  
+For that reason I included the CHR-RAM.  
+It is an 128 KB RAM, and I use it fully.  
+Logically it's separated into two banks, the first 64 KB hold background graphical information and the other 64 KB hold sprite graphical information.  
+  
+The way the graphics are stored in this RAM is the following.  
+8x8 pixel characters with 8bpp or 1 byte por pixel are stored contiguous in memory (64 bytes).  
+And for each 256 characters, I call it a "character page".  
+Therefore, the CHR-RAM has 4 character pages for background graphics and 4 character pages for sprite graphics.  
+
+In terms of how this component needed to be connected to the PPU, it had to be done differently.  
   
 First off I needed to access CHR-RAM at the same time or almost at the same time as VRAM. 
 So I need another set of counters to act independently from the one manipulating the VRAM adress:  
   
 <img src="/assets/video74HC193_3Diagram.png" alt="74HC193 use diagram" width="900"/>  
-
+  
 Another thing that would be important was to make this counter count backwards as well, for flipped sprites that I'll talk about later.  
   
 This still doesn't solve everything, let's say we're drawing the background and we need to:  
@@ -604,8 +618,10 @@ DrawSpriteCHRRAMLineLoop:
 
 ### Moving information from the CPU to the CHR-RAM 
 
-Originally I intended for the CPU to have direct access to the CHR-RAM together with the PPU, however when it came to actually figure out how to put the CHR-RAM into the project, I felt that in order to do this I had to add too many more components and I felt the project was already too complex.  
-So I went with another approach, which was to have the PPU as an intermediary carrying information from the CPU and putting it into the CHR-RAM.  
+For the custom graphics to be loaded into the CHR-RAM, this RAM needs to be accessed by the CPU.  
+Originally I intended for the CPU to have direct access to the CHR-RAM together with the PPU, however when it came to actually figuring out how to put the CHR-RAM into the project, I felt that in order to do this I had to add too many more components and I felt the project was already too complex.  
+  
+So I went with another approach, which was to have the PPU as an intermediary, carrying information from the CPU and putting it into the CHR-RAM.  
 In consoles such as the Sega Mega Drive (Genesis in the US), for example, the CPU has to activate a DMA to transfer bytes to the Video RAM, what I did is similar, if not a bit more crude.  
   
 The CPU can then copy information from the SD Card, for example, to the PPU-RAM, 3 KB at a time, because PPU-RAM has only 4KB in total, and set the PPU Mode in the PPU-RAM to "Copy to CHR-RAM".  
