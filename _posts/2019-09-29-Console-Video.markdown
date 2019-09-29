@@ -6,7 +6,7 @@ date:   2019-09-29
 comments: true
 ---
 
-<img src="/assets/VideoBoardCloseUp.jpg" alt="PCB populated" width="700"/>  
+<img src="/assets/videoBoardCloseUp.jpg" alt="PCB populated" width="700"/>  
   
 This is yet one more post about the retro homebrew console I've made and sumarized in this [post]({% link _posts/2019-03-14-Homebrew-Console.markdown %}).
 
@@ -52,32 +52,33 @@ It's not as versatile as today's system in terms of defining what the player see
   
 This technique has the advantage, of course, of not needing the CPU to do any of the heavy lifting when it comes to graphics, it doesn't need to define where each pixel will be drawn nor every detail of the scene.  
   
-For every frame, the CPU only needs to update certain properties of certain components, like the sprite's positions and attributes, background scroll position, etc.  
+For every frame, the CPU only needs to update certain properties of certain components, like the sprites' positions and attributes, background scroll position, etc.  
   
 <br/>
 # Challenges of building a Video System
   
-I had already figured that I was going to use an SRAM (dual-port) chip to store the scene's definition and serve as a place for the CPU to set these definitions and the PPU to read from them to know what to render (I called it PPU-RAM, giving components names helps, even if they're kind of silly, trust me).  
+I had already figured that I was going to use an SRAM (dual-port) chip to store the scene's definition and serve as a place for the CPU to set these definitions and the PPU to read from them to know what so as to know what to render (I called it PPU-RAM, giving components names helps, even if they're kind of silly, trust me).  
   
-So now in order to build my own video system I just needed to find out what I was going to use to read the scenes definition and render it to the TV screen.  
+So now in order to build my own video system I just needed to find out what I was going to use to read the scenes' definition and render it to the TV screen.  
   
 All of the consoles of the 80s and 90s had <a href="https://wikipedia.org/wiki/Application-specific_integrated_circuit" target="_blank">ASICs</a> for video, chips designed especially for this purporse, so rendering was done by specialised hardware.  
+  
 Obviously that wasn't an option for me, the closest thing to it and the most obvious choice (not at the time I started this project, though) was using an FPGA.  
 However, just like with many other things, when I started this endeavour I had very little knowledge of electronics, so dealing with FPGAs was not an option either.  
 The option left were microcontrollers, I had become quite experienced with AVR microcontrollers and knew that they were at least powerful enough to generate a viable video signal.  
   
 I had seen something like this before in <a href="http://belogic.com/uzebox/index.asp" target="_blank">Uzebox</a>, an awesome video game console project based on a single overclocked AVR microcontroller and it was a great inspiration for my own projects.  
   
-So I decided to use AVR microcontrollers as the basis for my console's video system.  
+So I decided to use these AVR microcontrollers as the basis for my console's video system.  
   
   
 # Math
   
-Using an AVR 20 Mhz microcontroller and a <a href="https://wikipedia.org/wiki/PAL" target="_blank">PAL</a> video signal (which uses a frequency of 50 Hz, meaning it runs at 50 fps) meant I had 400.000 clocks to render a frame and also generate the adequate TV signal with the correct timings.  
+Using a 20 Mhz AVR microcontroller and a <a href="https://wikipedia.org/wiki/PAL" target="_blank">PAL</a> video signal (which uses a screen refresh frequency of 50 Hz) meant I had 400.000 clocks to render a frame and also generate the adequate TV signal with the correct timings.  
   
 An added complexity is the fact that I have to interact with external memory, this is gonna be costlier in terms of performance than using the microcontroller's internal RAM.  
   
-One of the first decisions was to break into two separate microcontrollers, one to render frames, the **PPU** (Picture processing unit) and one to generate the video signal according to the frame drawn, the **VPU** (Video processing unit).  
+One of the first decisions was to break the system into two separate microcontrollers, one to render frames, the **PPU** (Picture processing unit) and one to generate the video signal according to the frame drawn, the **VPU** (Video processing unit).  
   
 This also meant that I was going to have to find a way to interface the two of them, the PPU and the VPU.  
 I did this using a double-buffering solution, adding 2 RAM components (VRAM 1 and VRAM 2).  
@@ -106,12 +107,14 @@ This is ok, but not great, at least for the amount of graphical complexity I was
 With these changes I now had 800.000 clocks to draw 43.008 pixels, which means about 18.6 instructions per pixel, giving me some leeway to get some nice graphical features to the video game console.  
   
 <br/>  
-The full capabilities for the video system wasn't decided right way, I just tried to cram as many features as I could in those 800.000 clocks to render a frame.  
+The full capabilities for the video system weren't decided right way, I just tried to cram as many features as I could in those 800.000 clocks to render a frame.  
   
-One bad thing with these decisions, mainly the double-buffering and the 25 fps is the latency.  
-This is a major drawback and at times I felt it was going to be a show-stopper.  
-The latency between user input to the frame being shown on a TV is between 100 and 120 milliseconds (using a CRT TV possibly helps).  
-This is a lot, however using it, I feel it's manageable even in action games.  
+One bad thing that came out of these decisions, mainly the double-buffering and the 25 fps was the latency.  
+  
+This is a drawback and at times I felt it was going to be a show-stopper.  
+The latency between user input to the frame being shown on a TV is between **100** and **120** milliseconds.  
+  
+This is a lot, however using it, I feel it's manageable even in action games (using a CRT TV possibly helps).  
   
   
 # Implementation details
