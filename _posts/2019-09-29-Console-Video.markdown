@@ -107,6 +107,17 @@ This is ok, but not great, at least for the amount of graphical complexity I was
   
 With these changes I now had 800.000 clocks to draw 43.008 pixels, which means about 18.6 instructions per pixel, giving me some leeway to get some nice graphical features to the video game console.  
   
+<br />
+Another thing I wanted to add, was a RAM to store custom graphics.  
+This **CHR-RAM** would store 128 KB of graphical data, divided into 8x8 pixel characters (just like other retro consoles).  
+However having this RAM meant that I needed for the CPU to somehow store data in it, and for the PPU to access it to use its information to render the scene.  
+  
+This added yet more complexity and had to be taken into account when estimating the clocks needed to render, however it was something I really felt was necessary.  
+  
+I could have some pre-defined graphics inside the PPU and have another mode to draw using the CHR-RAM graphics.  
+  
+Below I describe how I've optimized the access to this memory.  
+  
 <br/>  
 The full capabilities for the video system weren't decided right way, I just tried to cram as many features as I could in those 800.000 clocks to render a frame.  
   
