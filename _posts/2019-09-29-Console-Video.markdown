@@ -82,6 +82,7 @@ One of the first decisions was to break the system into two separate microcontro
   
 This also meant that I was going to have to find a way to interface the two of them, the PPU and the VPU.  
 I did this using a double-buffering solution, adding 2 RAM components (VRAM 1 and VRAM 2).  
+These components would each store a rendered frame.  
   
 The idea was to let the VPU exclusively generate the video signal getting the frame information from one of the VRAMs while the PPU was exclusively dedicated to rendering a frame and dumping it on the other VRAM and then they would switch VRAMs and repeat.  
   
@@ -164,7 +165,7 @@ Next, I'll go over the implementation details of the VPU and then the PPU.
 The VPU does the following:  
   
 1. Put the contents of the selected VRAM to screen  
-2. Put the contents of the selected VRAM to screen for the second time  
+2. Put the contents of the selected VRAM to screen for the second time (2 frames on the TV for every frame rendered)  
 3. Change the selected VRAM  
 4. Repeat the steps above  
   
@@ -178,7 +179,7 @@ In order to shorten the time necessary to read bytes from VRAM in consecutive ad
   
 ![74HC4040](/assets/74HC4040.png)  
   
-I need 16 bits to reach all the 43.008 bytes of the VRAM necessary for a frame. So I uses 2 74HC4040 as each one only has 12 bits and chained them together.  
+I need 16 bits to reach all the 43.008 bytes of the VRAM necessary for a frame. So I used 2 74HC4040 as each one only has 12 bits and chained them together.  
   
 By connecting the counter to the address bus of the VRAM instead of directly connecting to the microcontroller, I get to shave off a few instructions when retrieving the pixels and it also saves on the number of IO pins used for this purpose.  
   
@@ -193,16 +194,16 @@ The 4040 counters are connected to the four 74HC157s used to link the VPU and PP
   
 In order to send information to the screen using PAL, I need to to send a Sync signal holding the right information at the right time.  
 Below is a picture of the PAL timings (progressive mode and not interlaced mode, although I ended up using a hybrid mode, as progressive mode was not really 50Hz and I wanted 50Hz because it's a good round number).  
-In this picture you can see exactly when and for long the Sync signal needs to be High or Low in us (micro seconds).  
-Although you don't need to get these timings exactly to the nano-second and TVs are actually somewhat forgiving, it's important to get them right to get a good image and, in the case of modern digital TVs, to get an image at all.  
+In this picture you can see exactly when and for how long the Sync signal needs to be High or Low in us (micro seconds).  
+Although you don't need to get these timings exactly right to the nano-second and TVs are actually somewhat forgiving, it's important to get them right to get a good image and, in the case of modern digital TVs, to get an image at all.  
   
 ![PAL Timings](/assets/pal_tv_diagram_non_interlace.jpg)  
   
-Getting the right timings is usually achieved by using interrupts timed to trigger at the right time, however I used another more "naive" approach, that is using calculating how long each instruction takes and coding delays in order to make sure the sync signal is done at the right time.  
+Getting the right timings in a microcontroller is usually achieved by using interrupts timed to trigger at the right time, however I used another more "naive" approach, that is calculating how long each instruction takes and coding delays in order to make sure the sync signal is set or unset at the right time.  
   
 When in a frame line the VPU also outputs color information according to the current frame being put on to screen.  
 In an analogue signal you can put pixels at any frequency, of course that if the frequency is too low the pixels are going to be too long or "rectangular" and the resolution in width is going to be too low (the number of pixels you can fit in a line).  
-To make sure I can send different color data (pixels) fast to the TV screen, I need to make sure the code itself doesn't have a lot of instructions.  
+To make sure I can send different color data (pixels) fast enough to the TV screen, I need to make sure the code itself doesn't have a lot of instructions.  
   
 As I'm using an external counter (the 74HC4040 I mentioned above), I'm able to send a pixel with the following code (this code is actually a macro and not a function so I can reuse it without calling it and saving a few clocks with that):  
   
@@ -217,7 +218,7 @@ As I'm using an external counter (the 74HC4040 I mentioned above), I'm able to s
   
 Like I mentioned above, the microcontroller has its 32 IO pins divided into 4 "ports" of 8 pins each (Ports A, B, C and D), and I'm able to set and read from 8 pins at a time using single "in" and "out" instructions.  
   
-For the VPU, I used Port D for the pins that control the VRAM and the counter mentioned above, this way I could set them all at ounce, saving extra clocks.  
+For the VPU, I used Port D for the pins that control the VRAM and the counter mentioned above, this way I could set them all at once, saving extra clocks.  
   
 Port C (referred to as PINC when used as an input) is the Data bus from the current VRAM.  
   
@@ -226,7 +227,7 @@ Port A is the color output for the TV (the 8 pins deliver RGB color, 3 pins for 
 ![VPU connections](/assets/videoVpuConnections.png)  
   
 In the "SetPixel" code, READ_MEM_1_REG and READ_MEM_2_REG set the pins connected to the VRAM and the external counter to retrieve the current byte and add 1 to the counter. Inbetween I retrieve the color byte from VRAM and send it to the TV.  
-This way chaining 224 "SetPixel"s, I can retrieve 224 consecutive bytes from the VRAM (the pixels) and send its values as color information to the TV with just 4 instructions.  
+This way, by chaining 224 "SetPixel"s, I can retrieve 224 consecutive bytes from the VRAM (the pixels) and send its values as color information to the TV with just 4 instructions.  
 This code takes 4 clocks to execute.  
   
 And because I use 4 instructions for each pixel, the pixel clock (the frequency at which pixels are drawn, also known as dot clock) is of 5 Mhz.  
@@ -310,6 +311,8 @@ All the code was done in AVR assembly and in this manner.
   
 The VPU with the Sync signal, the color information (in RGB) and the help of a resistor DAC is able to generate an RGB PAL signal.  
   
+Here is diagram of the resistor DAC to convert the 8-bit color information into 3 analog signals:  
+  
 ![DAC](/assets/videoDAC.png)  
   
 However I really wanted to also have a composite signal for TVs without RGB input.  
@@ -333,23 +336,25 @@ I designed and ordered a breakout board for the SCART socket as its pins didn't 
   
 ## PPU
   
-The PPU's firmware is the most complex in this whole project. At first it was entirely programmed in AVR assembly, now it has a few sectiosn in C and others in assembly (it should be the other way around, I know, I should've started in C and moved to assembly, but oh well..).  
+The PPU's firmware is the most complex in this whole project. At first it was entirely programmed in AVR assembly, now it has a few sections in C and others in assembly (it should be the other way around, I know, I should've started in C and moved to assembly, but oh well..).  
 The reason I started developing it in assembly is because from the start I knew I had to get the best performance from the code in other to push the most complexity I could into the graphics.  
+  
+The PPU has the funcion of rendering the actual frames. It can use internal graphics (which are limited graphics stored in the firmware) which I call CHR-ROM or use an external RAM chip as the source of graphics: CHR-RAM.  
   
 The PPU's operates as follows:  
   
 - Copy the contents of the PPU-RAM to internal RAM.
 - Send the NMI signal to the CPU
-- If the PPU Mode is CHRROM:  
+- If the PPU Mode is CHR-ROM:  
   - Draw background with internal graphics
   - Draw sprites with internal graphics  
-- If the PPU Mode is CHRRAM:  
-  - Draw background with CHRRAM graphics
-  - Draw sprites with CHRRAM graphics
-  - Draw overlay with CHRRAM graphics
-  - Draw sprites over the overlay with CHRRAM graphics  
-- If the PPU Mode is copy to CHRRAM:
-  - Copy PPU-RAM contents to CHRRAM
+- If the PPU Mode is CHR-RAM:  
+  - Draw background with CHR-RAM graphics
+  - Draw sprites with CHR-RAM graphics
+  - Draw overlay with CHR-RAM graphics
+  - Draw sprites over the overlay with CHR-RAM graphics  
+- If the PPU Mode is copy to CHR-RAM:
+  - Copy PPU-RAM contents to CHR-RAM
   - Set the PPU Mode to Finished copying  
 - Wait for the VPU to signal the VRAM has switched  
 - Repeat  
@@ -363,8 +368,10 @@ Next I'm going to explain how the PPU interfaces with all these components.
 The CPU communicates with the Video system solely through the PPU-RAM.  
 This 4 KB RAM interfaces the CPU and the PPU.  
   
-The 8 data lines of the PPU-RAM are directly connected to one oh the ports of the PPU (Port C).  
-The 12 address lines are not directly connected to the microcontroller's GPIOs, I used a counters again, as with the VPU, this time I used 74HC193 counters, these counters have some advantages to the 74HC4040 counters, they can be set with a starting value and they are bi-directional.  
+The 8 data lines of the PPU-RAM are directly connected to one of the ports of the PPU (Port C).  
+  
+The 12 address lines are not directly connected to the microcontroller's GPIOs, I used counter chips again, as with the VPU, this time I used 74HC193 counters, these counters have some advantages in relation to the 74HC4040 counters, they can be set with a starting value and they are bi-directional.  
+  
 This way I can read specific regions of the memory without having to start from address 0, and I can read it backwards (which does not come in handy in this case).  
   
 In order to set the initial address to the counter, I use a latch (74HC573), so that I can reuse the same port of the PPU to set the whole address (Port A).  
@@ -421,7 +428,7 @@ Important notes about the code above:
 The SetMemPPURAM macro chooses which of the 3 RAMs I'm working with, this will be discussed further down the post.  
 In this code the counter is set to all zeros (16 bit), and then the bytes are read from the PPU-RAM (4096 bytes or two nested cycles of 64 each).  
 
-The _nop_ in the part where the byte is read is due to the RAM and counter not being fast enough when using a 20Mhz microcontroller, so a _nop_ was needed to act as a delay between interactions. The dual-port RAM used for PPU-RAM is actually an 100ns RAM, which means it works reliably at a maximum frequency of 10Mhz, so when working with a microcontroller which is twice as fast that has to be taken into consideration.  
+The _nop_ in the part where the byte is read is due to the RAM and counter not being fast enough when using a 20Mhz microcontroller, so a _nop_ was needed to act as a delay between interactions. The dual-port RAM used for PPU-RAM is actually an 100ns RAM, which means it works reliably at a maximum frequency of 10Mhz, so when working with a microcontroller which is twice as fast, that has to be taken into consideration.  
   
 Had I not used external counters, and the code would be more complex in the inner loop, I would have to increment the address and output two PORTs (because 8 bits are not enough) and still fetch the data and store to internal RAM, it would have been over 4 instructions.  
   
@@ -447,11 +454,11 @@ PPU Mode = 1:
   
 PPU Mode = 2:  
   
-- CHR-RAM copy mode. This mode uses a different memory mapping, and serves to copy information from the CPU to the CHR-RAM, I'll explain this in detail in a chapter ahead.  
+- CHR-RAM copy mode. This mode uses a different memory mapping, and serves to copy information from the CPU to the CHR-RAM, I'll explain this in detail in a chapter ahead. In this mode a scene is also rendered in a more limited way using CHR-ROM graphics.  
   
 PPU Mode = 3:  
   
-- CHR-RAM copy mode complete. The PPU sets the PPU Mode to 3 when it's in the PPU Mode 2 and the copy is complete. This way the CPU knows when it can use the PPU-RAM for other purpose, whether to copy more information to the CHR-RAM or to use it to draw a frame.  
+- CHR-RAM copy mode complete. The PPU sets the PPU Mode to 3 when it's in the PPU Mode 2 and the copy is complete. This way the CPU knows when it can use the PPU-RAM for another purpose, whether to copy more information to the CHR-RAM or to use it to draw a frame.  
   
 ### Interfacing with VRAM  
   
@@ -509,7 +516,7 @@ This still doesn't solve everything, let's say we're drawing the background and 
 Just the reading and writing operations takes about 4 instructions or 4 clocks, so it would take about 8 clocks everytime I need to write a pixel and there goes my performance down the drain.  
   
 I needed a way to speed it up, so I thought, since both the CHR-RAM and VRAM share the same data bus, maybe I could make the CHR-RAM read a byte and write it directly into VRAM, sort of like a DMA.  
-This couldn't be done without the PPU assistance because in the case of drawing sprites, the PPU would still need to check if the color byte matched the sprite colorkey in order to draw it or not in VRAM.  
+This couldn't be done without the PPU's assistance because in the case of drawing sprites, the PPU would still need to check if the color byte matched the sprite's colorkey in order to draw it or not in VRAM.  
   
 In order to achieve this I couldn't use the same control signals for both RAMS (CE, CE2, WE and OE), I used a second PLD in the project and as inputs I used the control signals as well as two other SM1 and SM2, that equate to a 2 bit Select Memory signal.  
 These Select Memory sinal works as such:
@@ -584,17 +591,19 @@ DrawSpriteCHRRAMLineLoop:
 ...
 {% endhighlight %}  
 
-### Moving information from the CPU to the CHRRAM 
+### Moving information from the CPU to the CHR-RAM 
 
-Originally I intended for the CPU to have direct access to the CHRRAM together with the PPU, however when it came to actually figure out how to put the CHRRAM into the project, I felt that in order to do this I had to add to many more components and I felt the project was already too complex.  
-So I went with another approach, which was to have the PPU as an intermediary carrying information from the CPU and putting it into the CHHRAM.  
+Originally I intended for the CPU to have direct access to the CHR-RAM together with the PPU, however when it came to actually figure out how to put the CHR-RAM into the project, I felt that in order to do this I had to add too many more components and I felt the project was already too complex.  
+So I went with another approach, which was to have the PPU as an intermediary carrying information from the CPU and putting it into the CHR-RAM.  
 In consoles such as the Sega Mega Drive (Genesis in the US), for example, the CPU has to activate a DMA to transfer bytes to the Video RAM, what I did is similar, if not a bit more crude.  
   
-The CPU can then copy information from the SD Card, for example, to the PPU-RAM, 3 KB at a time, because PPU-RAM has only 4KB in total, and set the PPU Mode in the PPU-RAM to "Copy to CHRRAM".  
+The CPU can then copy information from the SD Card, for example, to the PPU-RAM, 3 KB at a time, because PPU-RAM has only 4KB in total, and set the PPU Mode in the PPU-RAM to "Copy to CHR-RAM".  
   
-If the PPU Mode is "Copy to CHRRAM", this means that the PPU-RAM has this mapping:  
+If the PPU Mode is "Copy to CHR-RAM", this means that the PPU-RAM has this mapping:  
   
 ![PPU memory mapping](/assets/ppuMapping4.png)  
+  
+While in PPU Mode 2 or 3, a scene is also rendered using only one nametable and sprites (these graphical components will be explained below).  
   
 <br/>
   
@@ -616,9 +625,14 @@ This is the layout of the components described above in the video board:
   
 With the implementation described above these are the graphical capabilities I was able to put into the console:  
   
-A frame can be rendered using internal graphics or custom graphics residing in the CHRRAM. This is set through the PPU Mode as described above
-
-When using internal graphics the program is limited to 256 predefined characters for the background and 256 predefined characters for sprites. 
+A frame can be rendered using internal graphics or custom graphics residing in the CHR-RAM. This is set through the PPU Mode as described above.
+  
+Graphics are composed of 8x8 pixel characters, so all elements are rendered using this "building blocks".  
+Each character can have a total of 256 colors in RGB332 space (3 bits for red, 3 bits for green and 2 bits for blue):  
+  
+![RGB332](/assets/rgb332.png)  
+  
+When using internal graphics the program is limited to 256 predefined characters for the background and 256 predefined characters for sprites (1 character page for background and 1 for sprites). 
 In this mode the graphical capabilities are more modest:  
 
 - One scrollable background layer.  
@@ -634,6 +648,10 @@ When using custom graphics (CHRRAM), a scene can be composed of the following:
   
 - Horizontal Overlay Stripe composed of 28x6 characters  
   
+Also when using CHR-RAM, a program can use 4 pages of characters for background and 4 character pages for sprites.  
+  
+Each character page holds 256 characters.  
+  
 <img src="/assets/videoGraphicsComponents.png" alt="Graphics Components" width="900"/> 
   
 The next sections detail each of these components.  
@@ -641,7 +659,9 @@ The next sections detail each of these components.
 ### Background
   
 The frame has 224x192 pixels and because each character has 8x8 pixels, this equates to 28x24 characters.  
-To have the possibility to a larger "virtual" background that can be scrolled, there are four nametables (also known as tilemaps or pages, I'm not good with names...).  
+  
+To have the possibility for a larger "virtual" background that can be scrolled, there are four nametables (also known as tilemaps or pages, I'm not good with names...).  
+A nametable is an array that stores which character is where in the background.  
 Each one of these nametables has the same size as the size of the frame and are a map of 28x24 characters. The 4 of them are contiguous to each other in this configuration:  
   
 ![Image of the 4 nametables](/assets/virtualBackground.png)  
@@ -663,7 +683,7 @@ The Scroll Y byte determines how much of a vertical scroll there is on the namet
   
 #### Attribute Tables
   
-There is also the possibility to give an attribute from 0 to 3 to each of the tiles in every nametable.  
+There is also the possibility to give an attribute from 0 to 3 to each of the tiles/characters in every nametable.  
   
 ![Attributes](/assets/attributes.png)  
   
@@ -673,7 +693,7 @@ And it's possible to define on which of the 4 character pages each attribute is 
   
 To make this possible there is an area in the PPU-RAM with four attribute-tables, each table has 168 bytes, each byte corresponds to 4 tiles of the corresponding nametable.  
 The 2 least significant bits is the attribute of the first tile, the next 2 bits is the attribute of the second tile, etc.  
-(Check out the PPU Simulator to better understand how attribute tables work and how they're organised)  
+(Check out the [PPU Simulator]({% link _posts/2019-09-29-Console-PPU-Simulator.markdown %}) to better understand how attribute tables work and how they're organised)  
   
 #### Custom Scrolling
   
@@ -686,7 +706,7 @@ Next to this byte is the region to set custom horizontol scrolling composed of 6
 And next to this one is the region for custom vertical scrolling composed of 8 x 3 bytes.  
   
 The 3 bytes that define the scroll are the following:  
-1. The Line where the scroll will happen
+1. The line from which the scroll will start
 2. The value of the scroll
 3. The starting nametable (page) for the scroll (only least-significant bit used)
   
@@ -705,7 +725,7 @@ Custom-scrolling enables effects such as parallax and split-screen.
   
 ### Sprites
   
-Objects on top of a background that can move pixel by pixel independent of said background are essential components of a 2D game.  
+Objects on top of a background that can move pixel by pixel independently of said background are essential components of a 2D game.  
 For this reason, this video game console is able to render 64 moving objects (also known as sprites).  
   
 Each of the sprites has the following configurable properties:  
@@ -770,16 +790,18 @@ The strip can also be positioned anywhere vertically.
 
 In order to better understand how the PPU renders a screen and the interaction between the CPU and the PPU, I've made an online PPU simulator.  
 Here you can change the PPU-RAM and see the effects in real-time and even automate the changes every frame (in essence simulating a CPU).  
+Or you can just run the example scripts.  
 Check out the PPU Simulator [here]({% link _posts/2019-09-29-Console-PPU-Simulator.markdown %}).  
   
 # And this is it
   
-I had had a few requests to write about how the video was handled in this project and so I tried to be as extensive as I could.  
+I've had a few requests to write about how the video was handled in this project and so I tried to be as extensive as I could.  
 It took a lot of time to compile all the information, get the pictures, draw the diagrams, etc.  
 There was so much to talk about. It might be too much information for some and not enough for others.  
   
-I hope this helps someone with his or her projects, thank you for reading it.  
-I'm thinking of writing other posts about Video, Sound and other projects I have (hopefully I don't take as long).  
+I hope this helps someone with his or her projects.
+
+And if you've reached this far, thank you for reading it. :)  
   
 As always, any question or suggestion please comment below or reach me in my twitter account [@IntRegister](https://twitter.com/IntRegister)  
   
