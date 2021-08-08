@@ -1,0 +1,12 @@
+.main-content {
+    font-size: 1.0rem;
+    text-align: justify;
+    text-justify: inter-word;
+    color: #444444
+}
+
+.main-content img {
+    display:block;
+    margin-left:auto;
+    margin-right:auto;
+}
