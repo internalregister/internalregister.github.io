@@ -127,7 +127,7 @@ The usage of the memory available in this IC is split into two.
 The first 64KB is accessed exclusively by the CPU and it serves to store the code and data for the programs. 
 The second 64KB is what I call the Character RAM (CHRRAM) and it stores graphics, this is accessed by the CPU through the IO port and by the VDP to render frames. 
 
-![AS6C1008](/assets/console2_as6c1008.jpg)
+![AS6C1008](/assets/console2_AS6C1008.jpg)
 
 ### SD card reader
 
